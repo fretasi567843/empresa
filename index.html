@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080a0b">
+  <title>Inox Ferro - Orçamentos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <form class="login-card" id="loginForm">
+      <div class="login-brand">INOX FERRO</div>
+      <div class="login-subtitle">METALURGIA · SERRALHARIA</div>
+      <h1>ENTRAR</h1>
+      <label>
+        <span>UTILIZADOR</span>
+        <input id="loginUser" type="email" autocomplete="username" placeholder="Email" required>
+      </label>
+      <label>
+        <span>PALAVRA-PASSE</span>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Palavra-passe" required>
+      </label>
+      <p class="login-error hidden" id="loginError">Utilizador ou palavra-passe incorretos.</p>
+      <button type="submit">ENTRAR</button>
+    </form>
+  </section>
+
+  <div class="app-shell auth-locked" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <button class="brand" id="brandHome" type="button" aria-label="Voltar aos orçamentos">
+        <div class="brand-mark">INOX FERRO</div>
+        <div class="brand-subtitle">METALURGIA · SERRALHARIA</div>
+      </button>
+
+      <nav class="nav">
+        <p class="nav-label">PRINCIPAL</p>
+        <button class="nav-item active" data-view="quotes">
+          <span class="nav-icon">▦</span> ORÇAMENTOS
+        </button>
+        <button class="nav-item" data-view="saved">
+          <span class="nav-icon">▧</span> GUARDADOS
+          <span class="nav-count" id="savedCount">0</span>
+        </button>
+        <p class="nav-label">GESTÃO</p>
+        <button class="nav-item" data-view="materials">
+          <span class="nav-icon">◇</span> MATERIAIS
+        </button>
+        <button class="nav-item" data-view="statistics">
+          <span class="nav-icon">▥</span> ESTATÍSTICAS
+        </button>
+        <button class="nav-item" data-view="data">
+          <span class="nav-icon">▣</span> DADOS
+        </button>
+        <button class="nav-item" data-view="finance">
+          <span class="nav-icon">€</span> FINANÇAS
+        </button>
+      </nav>
+
+      <div class="storage-note">▣ &nbsp;Dados guardados localmente</div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menu">☰</button>
+        <span class="topbar-accent"></span>
+        <span id="pageTitle">GERAR ORÇAMENTO</span>
+        <button class="logout-button" id="logoutBtn">SAIR</button>
+        <button class="new-quote" id="newQuoteBtn">+ NOVO</button>
+      </header>
+
+      <section class="view active" id="quotesView">
+        <section class="catalog-panel">
+          <div class="section-heading">
+            <span class="heading-icon">▤</span>
+            <h1>CATÁLOGO</h1>
+            <span class="results-count" id="resultsCount"></span>
+          </div>
+
+          <div class="catalog-tools">
+            <select id="categoryFilter" aria-label="Filtrar categoria">
+              <option value="">Todas as categorias</option>
+            </select>
+            <label class="search-box">
+              <span>⌕</span>
+              <input id="searchInput" type="search" placeholder="Procurar material...">
+            </label>
+          </div>
+
+          <div class="catalog-table-wrap">
+            <table class="catalog-table">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Categoria</th>
+                  <th>Preço</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="catalogBody"></tbody>
+            </table>
+            <div class="empty-state hidden" id="catalogEmpty">Nenhum material encontrado.</div>
+          </div>
+        </section>
+
+        <section class="quote-panel">
+          <div class="quote-header">
+            <div class="quote-brand">
+              <div class="quote-brand-name">INOX FERRO</div>
+              <div class="quote-brand-subtitle">METALURGIA · SERRALHARIA</div>
+              <span class="quote-status" id="quoteStatus">NOVO</span>
+            </div>
+          </div>
+
+          <div class="client-fields">
+            <label>
+              <span>CLIENTE *</span>
+              <input id="clientName" type="text" placeholder="Nome do cliente">
+            </label>
+            <label>
+              <span>CONTACTO / NIF</span>
+              <input id="clientContact" type="text" placeholder="Telefone, email ou NIF">
+            </label>
+          </div>
+
+          <div class="quote-items" id="quoteItems">
+            <div class="quote-placeholder" id="quotePlaceholder">
+              <span>＋</span>
+              Adiciona materiais do catálogo
+            </div>
+            <div class="quote-attachments hidden" id="quoteAttachments"></div>
+          </div>
+
+          <div class="quote-summary">
+            <textarea id="notes" placeholder="Observações..."></textarea>
+            <div class="summary-row"><span>Subtotal</span><strong id="subtotal">0,00 €</strong></div>
+            <div class="summary-row tax-row">
+              <label>IVA <input id="taxRate" type="number" min="0" max="100" value="23"> %</label>
+              <strong id="taxAmount">0,00 €</strong>
+            </div>
+            <div class="total-row"><span>TOTAL</span><strong id="total">0,00 €</strong></div>
+            <div class="quote-actions">
+              <label class="attachment-button">
+                + ADICIONAR ANEXOS
+                <input id="attachmentInput" type="file" accept="image/*" multiple hidden>
+              </label>
+              <button id="viewAttachmentsBtn" class="secondary-action">▧ ANEXOS <span id="attachmentCount">0</span></button>
+              <button id="saveBtn" class="secondary-action">▣ GUARDAR</button>
+              <button id="printBtn" class="primary-action">▤ IMPRIMIR</button>
+              <button id="wordBtn" class="primary-action">⇩ WORD</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view simple-view" id="savedView">
+        <div class="saved-toolbar">
+          <span class="results-count" id="savedResultsCount"></span>
+          <label class="saved-search">
+            <span>⌕</span>
+            <input id="savedSearchInput" type="search" placeholder="Pesquisar pelo nome do cliente...">
+          </label>
+        </div>
+        <div class="saved-table-wrap">
+          <table class="saved-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Contacto / NIF</th>
+                <th>Materiais</th>
+                <th>Data</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="savedGrid"></tbody>
+          </table>
+          <div class="empty-card hidden" id="savedEmpty">Ainda não existem orçamentos guardados.</div>
+        </div>
+      </section>
+
+      <section class="view materials-view" id="materialsView">
+        <aside class="category-panel">
+          <div class="category-panel-title">
+            <span>CATEGORIAS</span>
+            <button id="addCategoryBtn" title="Adicionar categoria">+</button>
+          </div>
+          <div class="category-list" id="categoryList"></div>
+        </aside>
+
+        <section class="materials-panel">
+          <div class="materials-toolbar">
+            <h1 id="selectedCategoryTitle">MATERIAIS</h1>
+            <label class="materials-search">
+              <span>⌕</span>
+              <input id="materialsSearchInput" type="search" placeholder="Procurar...">
+            </label>
+            <button class="add-material-btn" id="addMaterialBtn">+ MATERIAL</button>
+            <button class="icon-action" id="editMaterialBtn" title="Editar material selecionado">✎</button>
+            <button class="icon-action danger" id="deleteMaterialBtn" title="Eliminar material selecionado">♲</button>
+          </div>
+
+          <div class="materials-table-wrap">
+            <table class="materials-table">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Preço (€)</th>
+                  <th>Unid.</th>
+                  <th>Atualizado</th>
+                </tr>
+              </thead>
+              <tbody id="materialsTableBody"></tbody>
+            </table>
+            <div class="empty-state hidden" id="materialsEmpty">Nenhum material nesta categoria.</div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view statistics-view" id="statisticsView">
+        <div class="statistics-header">
+          <div>
+            <span>GESTÃO</span>
+            <h1>ESTATÍSTICAS</h1>
+          </div>
+          <label class="month-filter">
+            <span>MÊS EM ANÁLISE</span>
+            <input id="statisticsMonth" type="month">
+          </label>
+        </div>
+
+        <div class="statistics-cards">
+          <article class="metric-card primary">
+            <span>FATURAÇÃO TOTAL</span>
+            <strong id="statsRevenue">0,00 €</strong>
+            <small id="statsMonthLabel"></small>
+          </article>
+          <article class="metric-card">
+            <span>SUBTOTAL</span>
+            <strong id="statsSubtotal">0,00 €</strong>
+            <small>Antes de IVA</small>
+          </article>
+          <article class="metric-card">
+            <span>IVA</span>
+            <strong id="statsTax">0,00 €</strong>
+            <small>Imposto calculado</small>
+          </article>
+          <article class="metric-card">
+            <span>ORÇAMENTOS</span>
+            <strong id="statsQuoteCount">0</strong>
+            <small id="statsAverage">Média: 0,00 €</small>
+          </article>
+          <article class="metric-card">
+            <span>CLIENTES</span>
+            <strong id="statsClientCount">0</strong>
+            <small>Clientes distintos</small>
+          </article>
+        </div>
+
+        <div class="statistics-table-wrap">
+          <div class="statistics-table-title">
+            <h2>FATURAÇÃO DO MÊS</h2>
+            <span id="statsTableCount"></span>
+          </div>
+          <table class="statistics-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Contacto / NIF</th>
+                <th>Data</th>
+                <th>Subtotal</th>
+                <th>IVA</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="statisticsTableBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="statisticsEmpty">Sem faturação registada neste mês.</div>
+        </div>
+      </section>
+
+      <section class="view data-view" id="dataView">
+        <div class="data-lock" id="dataLock">
+          <form class="data-lock-card" id="dataUnlockForm">
+            <span class="data-lock-icon">▣</span>
+            <h1>ÁREA PROTEGIDA</h1>
+            <p>Introduz a palavra-passe especial para gerir funcionários e dados internos.</p>
+            <label>
+              <span>PALAVRA-PASSE ESPECIAL</span>
+              <input id="dataPassword" type="password" autocomplete="off" placeholder="Palavra-passe" required>
+            </label>
+            <p class="data-lock-error hidden" id="dataLockError">Palavra-passe incorreta.</p>
+            <button type="submit">DESBLOQUEAR</button>
+          </form>
+        </div>
+
+        <div class="data-content hidden" id="dataContent">
+          <div class="data-header">
+            <div>
+              <span>GESTÃO INTERNA</span>
+              <h1>DADOS</h1>
+            </div>
+            <button class="lock-data-button" id="lockDataBtn">BLOQUEAR ÁREA</button>
+          </div>
+
+          <div class="employee-stats">
+            <article><strong id="employeeTotal">0</strong><span>Funcionários</span></article>
+            <article><strong id="employeeActive">0</strong><span>Ativos</span></article>
+            <article><strong id="employeeDepartments">0</strong><span>Funções diferentes</span></article>
+          </div>
+
+          <section class="employee-manager">
+            <form class="employee-form" id="employeeForm">
+              <input id="employeeEditId" type="hidden">
+              <div class="employee-form-title">
+                <h2 id="employeeFormTitle">NOVO FUNCIONÁRIO</h2>
+                <button type="button" class="hidden" id="cancelEmployeeEdit">CANCELAR EDIÇÃO</button>
+              </div>
+              <label>
+                <span>NOME *</span>
+                <input id="employeeName" type="text" required>
+              </label>
+              <label>
+                <span>FUNÇÃO</span>
+                <input id="employeeRole" type="text" placeholder="Ex.: Serralheiro">
+              </label>
+              <label>
+                <span>CONTACTO</span>
+                <input id="employeeContact" type="text" placeholder="Telefone ou email">
+              </label>
+              <label>
+                <span>NIF</span>
+                <input id="employeeNif" type="text">
+              </label>
+              <label>
+                <span>DATA DE ENTRADA</span>
+                <input id="employeeStartDate" type="date">
+              </label>
+              <label>
+                <span>ESTADO</span>
+                <select id="employeeStatus">
+                  <option value="Ativo">Ativo</option>
+                  <option value="Inativo">Inativo</option>
+                  <option value="Férias">Férias</option>
+                  <option value="Baixa">Baixa</option>
+                </select>
+              </label>
+              <label class="employee-notes-field">
+                <span>OBSERVAÇÕES</span>
+                <textarea id="employeeNotes" placeholder="Informação interna..."></textarea>
+              </label>
+              <button class="save-employee-button" type="submit">GUARDAR FUNCIONÁRIO</button>
+            </form>
+
+            <div class="employee-list-panel">
+              <div class="employee-list-toolbar">
+                <h2>FUNCIONÁRIOS</h2>
+                <label>
+                  <span>⌕</span>
+                  <input id="employeeSearch" type="search" placeholder="Pesquisar funcionário...">
+                </label>
+              </div>
+              <div class="employee-table-wrap">
+                <table class="employee-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Função</th>
+                      <th>Contacto</th>
+                      <th>Estado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="employeeTableBody"></tbody>
+                </table>
+                <div class="empty-state hidden" id="employeeEmpty">Ainda não existem funcionários registados.</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view finance-view" id="financeView">
+        <div class="data-lock" id="financeLock">
+          <form class="data-lock-card" id="financeUnlockForm">
+            <span class="data-lock-icon">€</span>
+            <h1>FINANÇAS CONFIDENCIAIS</h1>
+            <p>Introduz a palavra-passe especial para consultar recebimentos, dívidas e despesas.</p>
+            <label>
+              <span>PALAVRA-PASSE ESPECIAL</span>
+              <input id="financePassword" type="password" autocomplete="off" placeholder="Palavra-passe" required>
+            </label>
+            <p class="data-lock-error hidden" id="financeLockError">Palavra-passe incorreta.</p>
+            <button type="submit">DESBLOQUEAR</button>
+          </form>
+        </div>
+
+        <div class="finance-content hidden" id="financeContent">
+          <div class="data-header">
+            <div>
+              <span>GESTÃO CONFIDENCIAL</span>
+              <h1>FINANÇAS</h1>
+            </div>
+            <button class="lock-data-button" id="lockFinanceBtn">BLOQUEAR ÁREA</button>
+          </div>
+
+          <div class="finance-cards">
+            <article><span>VALOR DOS ORÇAMENTOS</span><strong id="financeQuoted">0,00 €</strong></article>
+            <article class="positive"><span>RECEBIDO</span><strong id="financeReceived">0,00 €</strong></article>
+            <article class="warning"><span>POR RECEBER</span><strong id="financeReceivable">0,00 €</strong></article>
+            <article class="danger"><span>DESPESAS PENDENTES</span><strong id="financePendingExpenses">0,00 €</strong></article>
+            <article><span>SALDO ATUAL</span><strong id="financeBalance">0,00 €</strong></article>
+          </div>
+
+          <section class="finance-section">
+            <div class="finance-section-header">
+              <div>
+                <h2>RECEBIMENTOS DOS CLIENTES</h2>
+                <span>O valor é obtido diretamente dos orçamentos guardados.</span>
+              </div>
+              <label class="finance-search">
+                <span>⌕</span>
+                <input id="financeQuoteSearch" type="search" placeholder="Pesquisar cliente...">
+              </label>
+            </div>
+            <div class="finance-table-wrap">
+              <table class="finance-table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Data</th>
+                    <th>Orçamento</th>
+                    <th>Pagamento</th>
+                    <th>Recebido</th>
+                    <th>Em dívida</th>
+                  </tr>
+                </thead>
+                <tbody id="financeQuotesBody"></tbody>
+              </table>
+              <div class="empty-state hidden" id="financeQuotesEmpty">Sem orçamentos guardados.</div>
+            </div>
+          </section>
+
+          <section class="finance-section expenses-section">
+            <form class="expense-form" id="expenseForm">
+              <div class="expense-form-title">
+                <h2>NOVO PAGAMENTO / DESPESA</h2>
+                <span>Regista valores que a empresa tem de pagar.</span>
+              </div>
+              <label>
+                <span>DESCRIÇÃO *</span>
+                <input id="expenseDescription" type="text" required placeholder="Ex.: Fornecedor de ferro">
+              </label>
+              <label>
+                <span>VALOR *</span>
+                <input id="expenseAmount" type="number" min="0.01" step="0.01" required>
+              </label>
+              <label>
+                <span>VENCIMENTO</span>
+                <input id="expenseDueDate" type="date">
+              </label>
+              <label>
+                <span>ESTADO</span>
+                <select id="expenseStatus">
+                  <option value="Pendente">Pendente</option>
+                  <option value="Pago">Pago</option>
+                </select>
+              </label>
+              <button type="submit">ADICIONAR</button>
+            </form>
+
+            <div class="expense-list">
+              <div class="finance-section-header">
+                <div>
+                  <h2>PAGAMENTOS DA EMPRESA</h2>
+                  <span>Despesas pendentes e concluídas.</span>
+                </div>
+              </div>
+              <div class="finance-table-wrap">
+                <table class="finance-table expense-table">
+                  <thead>
+                    <tr>
+                      <th>Descrição</th>
+                      <th>Vencimento</th>
+                      <th>Valor</th>
+                      <th>Estado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="expensesBody"></tbody>
+                </table>
+                <div class="empty-state hidden" id="expensesEmpty">Sem despesas registadas.</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="material-modal hidden" id="materialModal">
+    <div class="material-modal-backdrop" data-close-material-modal></div>
+    <form class="material-modal-card" id="materialForm">
+      <div class="material-modal-header">
+        <div>
+          <span>GESTÃO DE MATERIAIS</span>
+          <h2 id="materialModalTitle">NOVO MATERIAL</h2>
+        </div>
+        <button type="button" data-close-material-modal aria-label="Fechar">×</button>
+      </div>
+
+      <label class="material-form-field full">
+        <span>NOME DO MATERIAL *</span>
+        <input id="materialFormName" type="text" required placeholder="Ex.: Tubo quadrado 40x40">
+      </label>
+      <label class="material-form-field full">
+        <span>CATEGORIA *</span>
+        <select id="materialFormCategory" required></select>
+      </label>
+      <label class="material-form-field full hidden" id="newCategoryField">
+        <span>NOVA CATEGORIA *</span>
+        <input id="materialFormNewCategory" type="text" placeholder="Nome da nova categoria">
+      </label>
+      <label class="material-form-field">
+        <span>PREÇO (€) *</span>
+        <input id="materialFormPrice" type="number" min="0" step="0.01" required placeholder="0,00">
+      </label>
+      <label class="material-form-field">
+        <span>UNIDADE *</span>
+        <select id="materialFormUnit" required>
+          <option value="m/l">Metro linear (m/l)</option>
+          <option value="un">Unidade (un)</option>
+          <option value="hora">Hora</option>
+          <option value="placa">Placa</option>
+          <option value="par">Par</option>
+          <option value="kg">Quilograma (kg)</option>
+          <option value="m²">Metro quadrado (m²)</option>
+        </select>
+      </label>
+
+      <div class="material-modal-actions">
+        <button type="button" class="material-cancel" data-close-material-modal>CANCELAR</button>
+        <button type="submit" class="material-submit">GUARDAR MATERIAL</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

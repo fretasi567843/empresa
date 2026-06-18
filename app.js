@@ -180,7 +180,7 @@ const loginCredentials = {
   user: "inoxferro@gmail.com",
   password: "claudia26"
 };
-const dataAreaPassword = "pombas2019";
+const dataAreaPassword = "2317";
 const money = (value) => new Intl.NumberFormat("pt-PT", {
   style: "currency", currency: "EUR"
 }).format(value);
@@ -240,9 +240,11 @@ function setSavedQuotes(quotes) {
 function populateCategories() {
   const categories = [...new Set(materials.map(item => item.category))]
     .sort((a, b) => a.localeCompare(b, "pt"));
-  $("#categoryFilter").insertAdjacentHTML("beforeend",
-    categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("")
-  );
+  const selected = $("#categoryFilter").value;
+  $("#categoryFilter").innerHTML =
+    '<option value="">Todas as categorias</option>' +
+    categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
+  $("#categoryFilter").value = categories.includes(selected) ? selected : "";
 }
 
 function renderCatalog() {
@@ -253,7 +255,7 @@ function renderCatalog() {
     (!search || normalize(`${item.name} ${item.category}`).includes(search))
   );
 
-  $("#resultsCount").textContent = `${filtered.length} materiais`;
+  $("#resultsCount").innerHTML = `<strong>${filtered.length}</strong> <span>MATERIAIS</span>`;
   $("#catalogEmpty").classList.toggle("hidden", filtered.length > 0);
   $("#catalogBody").innerHTML = filtered.map(item => `
     <tr>
@@ -310,7 +312,6 @@ function renderQuote() {
 function renderAttachments() {
   const container = $("#quoteAttachments");
   container.classList.toggle("hidden", state.attachments.length === 0);
-  $("#attachmentCount").textContent = state.attachments.length;
   container.innerHTML = state.attachments.map((attachment, index) => `
     <figure class="quote-attachment">
       <img src="${attachment.data}" alt="${escapeHtml(attachment.name || `Anexo ${index + 1}`)}">
@@ -410,6 +411,7 @@ function saveQuote() {
   payload.createdAt = new Date().toISOString();
   const saved = getSavedQuotes();
   const index = saved.findIndex(quote => quote.id === payload.id);
+  payload.status = index >= 0 ? saved[index].status || "processing" : "processing";
   if (index >= 0) saved[index] = payload;
   else saved.unshift(payload);
   if (!setSavedQuotes(saved)) {
@@ -450,14 +452,23 @@ function renderSaved() {
   $("#savedEmpty").classList.toggle("hidden", filtered.length > 0);
   $("#savedGrid").innerHTML = filtered.map(quote => `
     <tr>
-      <td class="saved-client">${escapeHtml(quote.client || "Sem cliente")}</td>
+      <td class="saved-client">
+        <strong>${escapeHtml(quote.client || "Sem cliente")}</strong>
+        <small>ORÇAMENTO ${escapeHtml(quote.number || "—")}</small>
+      </td>
       <td class="saved-contact">${escapeHtml(quote.contact || "—")}</td>
       <td class="saved-materials">${quote.items.length} ${quote.items.length === 1 ? "material" : "materiais"}</td>
       <td class="saved-date">${new Date(quote.createdAt).toLocaleDateString("pt-PT")}</td>
       <td class="saved-total">${money(quote.total)}</td>
+      <td>
+        <select class="saved-status ${quote.status === "validated" ? "validated" : "processing"}" data-quote-status="${quote.id}">
+          <option value="processing" ${quote.status !== "validated" ? "selected" : ""}>Em processamento</option>
+          <option value="validated" ${quote.status === "validated" ? "selected" : ""}>Validado</option>
+        </select>
+      </td>
       <td class="saved-actions">
-        <button data-load="${quote.id}" title="Abrir orçamento">↗</button>
-        <button class="delete-saved" data-delete="${quote.id}" title="Eliminar orçamento">×</button>
+        <button class="open-saved" data-load="${quote.id}" title="Abrir orçamento">ABRIR</button>
+        <button class="delete-saved" data-delete="${quote.id}" title="Eliminar orçamento">ELIMINAR</button>
       </td>
     </tr>
   `).join("");
@@ -485,6 +496,16 @@ function deleteQuote(id) {
   renderSaved();
   updateSavedCount();
   showToast("Orçamento eliminado.");
+}
+
+function updateQuoteStatus(id, status) {
+  const saved = getSavedQuotes();
+  const quote = saved.find(item => item.id === id);
+  if (!quote || !["processing", "validated"].includes(status)) return;
+  quote.status = status;
+  setSavedQuotes(saved);
+  renderSaved();
+  showToast(status === "validated" ? "Orçamento validado." : "Orçamento em processamento.");
 }
 
 function getMaterialCategories() {
@@ -832,6 +853,35 @@ function addMaterialCategory() {
   openMaterialModal(null, true);
 }
 
+function renameSelectedCategory() {
+  const currentCategory = state.selectedMaterialCategory;
+  if (!currentCategory) {
+    showToast("Seleciona primeiro uma categoria.");
+    return;
+  }
+
+  const newCategory = prompt("Novo nome da categoria:", currentCategory)?.trim();
+  if (!newCategory || newCategory === currentCategory) return;
+
+  const exists = getMaterialCategories().some(category =>
+    normalize(category) === normalize(newCategory) && category !== currentCategory
+  );
+  if (exists) {
+    showToast("Já existe uma categoria com esse nome.");
+    return;
+  }
+
+  materials.forEach(material => {
+    if (material.category === currentCategory) material.category = newCategory;
+  });
+  state.selectedMaterialCategory = newCategory;
+  state.selectedMaterialId = null;
+  populateCategories();
+  renderMaterialsManager();
+  renderCatalog();
+  showToast("Nome da categoria atualizado.");
+}
+
 function addMaterial() {
   openMaterialModal();
 }
@@ -925,39 +975,43 @@ function switchView(view) {
   $("#sidebar").classList.remove("open");
 }
 
-function exportWord() {
+function exportPdf() {
   if (!state.items.length) {
-    showToast("Adiciona materiais antes de exportar.");
+    showToast("Adiciona materiais antes de guardar o PDF.");
+    return;
+  }
+  showToast('Escolha "Guardar como PDF" e selecione a pasta.');
+  setTimeout(() => window.print(), 150);
+}
+
+function sendQuote() {
+  if (!state.items.length) {
+    showToast("Adiciona materiais antes de enviar.");
     return;
   }
   const quote = quotePayload();
-  const rows = quote.items.map(item => `
-    <tr><td>${escapeHtml(item.name)}</td><td>${item.qty} ${escapeHtml(item.unit)}</td>
-    <td>${money(item.price)}</td><td>${money(item.price * item.qty)}</td></tr>
-  `).join("");
-  const attachments = quote.attachments?.length
-    ? `<h3>Imagens anexadas</h3>${quote.attachments.map(attachment =>
-        `<img src="${attachment.data}" style="max-width:48%;max-height:320px;margin:1%;object-fit:contain">`
-      ).join("")}`
-    : "";
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-    body{font-family:Arial,sans-serif;color:#222}h1{color:#e87800}table{width:100%;border-collapse:collapse;margin-top:25px}
-    th,td{border:1px solid #999;padding:8px;text-align:left}th{background:#eee}.right{text-align:right}
-  </style></head><body>
-    <h1>INOX FERRO</h1><p>METALURGIA · SERRALHARIA</p>
-    <p><b>Cliente:</b> ${escapeHtml(quote.client || "-")}<br><b>Contacto / NIF:</b> ${escapeHtml(quote.contact || "-")}</p>
-    <table><thead><tr><th>Material</th><th>Quantidade</th><th>Preço</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="right">Subtotal: <b>${money(quote.subtotal)}</b><br>IVA (${quote.taxRate}%): <b>${money(quote.total - quote.subtotal)}</b></p>
-    <h2 class="right">TOTAL: ${money(quote.total)}</h2>
-    <p><b>Observações:</b><br>${escapeHtml(quote.notes || "-").replace(/\n/g, "<br>")}</p>
-    ${attachments}
-  </body></html>`;
-  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `Orcamento-${(quote.client || "cliente").replace(/[^a-z0-9]+/gi, "-")}.doc`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  const recipient = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(quote.contact) ? quote.contact : "";
+  const items = quote.items.map(item =>
+    `- ${item.name}: ${item.qty} ${item.unit} x ${money(item.price)} = ${money(item.price * item.qty)}`
+  ).join("\n");
+  const subject = `Orçamento Dinis e claudia LDA - ${quote.client || quote.number}`;
+  const body = [
+    `Olá ${quote.client || ""},`,
+    "",
+    "Segue o resumo do orçamento da Dinis e claudia LDA:",
+    "",
+    items,
+    "",
+    `Subtotal: ${money(quote.subtotal)}`,
+    `IVA (${quote.taxRate}%): ${money(quote.total - quote.subtotal)}`,
+    `TOTAL: ${money(quote.total)}`,
+    quote.notes ? `\nObservações:\n${quote.notes}` : "",
+    "",
+    "Com os melhores cumprimentos,",
+    "Dinis e claudia LDA"
+  ].join("\n");
+  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipient)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(gmailUrl, "_blank", "noopener");
 }
 
 function normalize(value) {
@@ -1027,7 +1081,8 @@ $("#categoryFilter").addEventListener("change", renderCatalog);
 $("#taxRate").addEventListener("input", renderQuote);
 $("#saveBtn").addEventListener("click", saveQuote);
 $("#printBtn").addEventListener("click", () => window.print());
-$("#wordBtn").addEventListener("click", exportWord);
+$("#pdfBtn").addEventListener("click", exportPdf);
+$("#sendBtn").addEventListener("click", sendQuote);
 $("#attachmentInput").addEventListener("change", event => {
   addAttachments(event.target.files);
   event.target.value = "";
@@ -1052,6 +1107,10 @@ $$(".nav-item").forEach(button => button.addEventListener("click", () => switchV
 $("#savedGrid").addEventListener("click", event => {
   if (event.target.dataset.load) loadQuote(event.target.dataset.load);
   if (event.target.dataset.delete) deleteQuote(event.target.dataset.delete);
+});
+$("#savedGrid").addEventListener("change", event => {
+  const select = event.target.closest("[data-quote-status]");
+  if (select) updateQuoteStatus(select.dataset.quoteStatus, select.value);
 });
 $("#savedSearchInput").addEventListener("input", renderSaved);
 $("#statisticsMonth").addEventListener("change", renderStatistics);
@@ -1125,6 +1184,7 @@ $("#materialsTableBody").addEventListener("click", event => {
 });
 $("#materialsSearchInput").addEventListener("input", renderMaterialsManager);
 $("#addCategoryBtn").addEventListener("click", addMaterialCategory);
+$("#editCategoryBtn").addEventListener("click", renameSelectedCategory);
 $("#addMaterialBtn").addEventListener("click", addMaterial);
 $("#editMaterialBtn").addEventListener("click", editSelectedMaterial);
 $("#deleteMaterialBtn").addEventListener("click", deleteSelectedMaterial);

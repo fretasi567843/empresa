@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#080a0b">
-  <title>Inox Ferro - Orçamentos</title>
+  <title>Dinis e claudia LDA - Orçamentos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body>
   <section class="login-screen" id="loginScreen">
     <form class="login-card" id="loginForm">
-      <div class="login-brand">INOX FERRO</div>
+      <div class="login-brand">DINIS E CLAUDIA LDA</div>
       <div class="login-subtitle">METALURGIA · SERRALHARIA</div>
       <h1>ENTRAR</h1>
       <label>
@@ -32,7 +32,7 @@
   <div class="app-shell auth-locked" id="appShell">
     <aside class="sidebar" id="sidebar">
       <button class="brand" id="brandHome" type="button" aria-label="Voltar aos orçamentos">
-        <div class="brand-mark">INOX FERRO</div>
+        <div class="brand-mark">DINIS E CLAUDIA LDA</div>
         <div class="brand-subtitle">METALURGIA · SERRALHARIA</div>
       </button>
 
@@ -75,8 +75,6 @@
       <section class="view active" id="quotesView">
         <section class="catalog-panel">
           <div class="section-heading">
-            <span class="heading-icon">▤</span>
-            <h1>CATÁLOGO</h1>
             <span class="results-count" id="resultsCount"></span>
           </div>
 
@@ -109,7 +107,7 @@
         <section class="quote-panel">
           <div class="quote-header">
             <div class="quote-brand">
-              <div class="quote-brand-name">INOX FERRO</div>
+              <div class="quote-brand-name">DINIS E CLAUDIA LDA</div>
               <div class="quote-brand-subtitle">METALURGIA · SERRALHARIA</div>
               <span class="quote-status" id="quoteStatus">NOVO</span>
             </div>
@@ -143,14 +141,15 @@
             </div>
             <div class="total-row"><span>TOTAL</span><strong id="total">0,00 €</strong></div>
             <div class="quote-actions">
-              <label class="attachment-button">
-                + ADICIONAR ANEXOS
-                <input id="attachmentInput" type="file" accept="image/*" multiple hidden>
-              </label>
-              <button id="viewAttachmentsBtn" class="secondary-action">▧ ANEXOS <span id="attachmentCount">0</span></button>
-              <button id="saveBtn" class="secondary-action">▣ GUARDAR</button>
-              <button id="printBtn" class="primary-action">▤ IMPRIMIR</button>
-              <button id="wordBtn" class="primary-action">⇩ WORD</button>
+              <input id="attachmentInput" type="file" accept="image/*" multiple hidden>
+              <button id="viewAttachmentsBtn" class="secondary-action">
+                <span class="action-icon">⌘</span>
+                <span>ANEXOS</span>
+              </button>
+              <button id="saveBtn" class="secondary-action"><span class="action-icon">▣</span><span>GUARDAR</span></button>
+              <button id="printBtn" class="primary-action"><span class="action-icon">▤</span><span>IMPRIMIR</span></button>
+              <button id="pdfBtn" class="primary-action"><span class="action-icon">PDF</span><span>PDF</span></button>
+              <button id="sendBtn" class="primary-action send-action"><span class="action-icon">✈</span><span>ENVIAR</span></button>
             </div>
           </div>
         </section>
@@ -173,7 +172,8 @@
                 <th>Materiais</th>
                 <th>Data</th>
                 <th>Total</th>
-                <th></th>
+                <th>Estado</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="savedGrid"></tbody>
@@ -186,7 +186,10 @@
         <aside class="category-panel">
           <div class="category-panel-title">
             <span>CATEGORIAS</span>
-            <button id="addCategoryBtn" title="Adicionar categoria">+</button>
+            <div class="category-title-actions">
+              <button id="editCategoryBtn" title="Mudar nome da categoria selecionada">✎</button>
+              <button id="addCategoryBtn" title="Adicionar categoria">+</button>
+            </div>
           </div>
           <div class="category-list" id="categoryList"></div>
         </aside>
